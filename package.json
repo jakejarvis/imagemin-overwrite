@@ -1,9 +1,9 @@
 {
-	"name": "imagemin",
+	"name": "imagemin-overwrite",
 	"version": "7.0.1",
-	"description": "Minify images seamlessly",
+	"description": "Minify images seamlessly and in-place",
 	"license": "MIT",
-	"repository": "imagemin/imagemin",
+	"repository": "jakejarvis/imagemin-overwrite",
 	"engines": {
 		"node": ">=8"
 	},
@@ -14,6 +14,7 @@
 		"index.js"
 	],
 	"keywords": [
+		"imagemin",
 		"minify",
 		"compress",
 		"image",
