@@ -20,7 +20,6 @@ test('optimize a file', async t => {
 		plugins: [imageminJpegtran()]
 	});
 
-	t.is(files[0].destinationPath, undefined);
 	t.true(files[0].data.length < buffer.length);
 	t.true(isJpg(files[0].data));
 });
@@ -50,7 +49,6 @@ test('return original file if no plugins are defined', async t => {
 	const buffer = await readFile(path.join(__dirname, 'fixture.jpg'));
 	const files = await imagemin(['fixture.jpg']);
 
-	t.is(files[0].destinationPath, undefined);
 	t.deepEqual(files[0].data, buffer);
 	t.true(isJpg(files[0].data));
 });
@@ -85,7 +83,7 @@ test('return processed buffer even it is a bad optimization', async t => {
 	t.true(data.length > buffer.length);
 });
 
-test('output at the specified location', async t => {
+test('output at the specified destination', async t => {
 	const temp = tempy.directory();
 	const destinationTemp = tempy.directory();
 	const buffer = await readFile(path.join(__dirname, 'fixture.jpg'));
@@ -102,6 +100,21 @@ test('output at the specified location', async t => {
 	t.true(fs.existsSync(files[1].destinationPath));
 
 	await del([temp, destinationTemp], {force: true});
+});
+
+test('output at the original location', async t => {
+	const preBuffer = await readFile(path.join(__dirname, 'fixture.jpg'));
+
+	const files = await imagemin(['fixture.jpg'], {
+		plugins: [imageminJpegtran()]
+	});
+
+	const postBuffer = await readFile(path.join(__dirname, 'fixture.jpg'));
+
+	t.true(postBuffer.length < preBuffer.length);
+	t.true(isJpg(files[0].data));
+
+	await writeFile(path.join(__dirname, 'fixture.jpg'), preBuffer);
 });
 
 test('set webp ext', async t => {
