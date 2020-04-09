@@ -14,14 +14,46 @@ import imagemin from '.';
 const readFile = promisify(fs.readFile);
 const writeFile = promisify(fs.writeFile);
 
-test('optimize a file', async t => {
+test('optimize and output at a specified new destination', async t => {
+	const temp = tempy.directory();
+	const destinationTemp = tempy.directory();
 	const buffer = await readFile(path.join(__dirname, 'fixture.jpg'));
-	const files = await imagemin(['fixture.jpg'], {
+
+	await makeDir(temp);
+	await writeFile(path.join(temp, 'fixture.jpg'), buffer);
+
+	const files = await imagemin([`${temp}/*.jpg`], {
+		destination: destinationTemp,
 		plugins: [imageminJpegtran()]
 	});
 
-	t.true(files[0].data.length < buffer.length);
+	const postBuffer = await readFile(path.join(destinationTemp, 'fixture.jpg'));
+
+	t.true(fs.existsSync(files[0].destinationPath));
+	t.true(postBuffer.length < buffer.length);
+
+	await del([temp, destinationTemp], {force: true});
+});
+
+test('optimize and overwrite original', async t => {
+	const temp = tempy.directory();
+	const buffer = await readFile(path.join(__dirname, 'fixture.jpg'));
+
+	await makeDir(temp);
+	await writeFile(path.join(temp, 'fixture.jpg'), buffer);
+
+	const preBuffer = await readFile(path.join(temp, 'fixture.jpg'));
+
+	const files = await imagemin([`${temp}/*.jpg`], {
+		plugins: [imageminJpegtran()]
+	});
+
+	const postBuffer = await readFile(path.join(temp, 'fixture.jpg'));
+
+	t.true(postBuffer.length < preBuffer.length);
 	t.true(isJpg(files[0].data));
+
+	await del([temp], {force: true});
 });
 
 test('optimize a buffer', async t => {
@@ -83,40 +115,6 @@ test('return processed buffer even it is a bad optimization', async t => {
 	t.true(data.length > buffer.length);
 });
 
-test('output at the specified destination', async t => {
-	const temp = tempy.directory();
-	const destinationTemp = tempy.directory();
-	const buffer = await readFile(path.join(__dirname, 'fixture.jpg'));
-
-	await makeDir(temp);
-	await writeFile(path.join(temp, 'fixture.jpg'), buffer);
-
-	const files = await imagemin(['fixture.jpg', `${temp}/*.jpg`], {
-		destination: destinationTemp,
-		plugins: [imageminJpegtran()]
-	});
-
-	t.true(fs.existsSync(files[0].destinationPath));
-	t.true(fs.existsSync(files[1].destinationPath));
-
-	await del([temp, destinationTemp], {force: true});
-});
-
-test('output at the original location', async t => {
-	const preBuffer = await readFile(path.join(__dirname, 'fixture.jpg'));
-
-	const files = await imagemin(['fixture.jpg'], {
-		plugins: [imageminJpegtran()]
-	});
-
-	const postBuffer = await readFile(path.join(__dirname, 'fixture.jpg'));
-
-	t.true(postBuffer.length < preBuffer.length);
-	t.true(isJpg(files[0].data));
-
-	await writeFile(path.join(__dirname, 'fixture.jpg'), preBuffer);
-});
-
 test('set webp ext', async t => {
 	const temp = tempy.file();
 	const files = await imagemin(['fixture.jpg'], {
@@ -148,13 +146,4 @@ test('ignores junk files', async t => {
 	t.false(fs.existsSync(path.join(destinationTemp, 'Thumbs.db')));
 
 	await del([temp, destinationTemp], {force: true});
-});
-
-test('glob option', async t => {
-	const files = await imagemin(['fixture.jpg'], {
-		glob: false,
-		plugins: [imageminJpegtran()]
-	});
-
-	t.true(isJpg(files[0].data));
 });
