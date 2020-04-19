@@ -35,7 +35,7 @@
 		"replace-ext": "^1.0.0"
 	},
 	"devDependencies": {
-		"ava": "^2.1.0",
+		"ava": "^3.7.1",
 		"del": "^4.1.1",
 		"imagemin-jpegtran": "^6.0.0",
 		"imagemin-svgo": "^7.0.0",
